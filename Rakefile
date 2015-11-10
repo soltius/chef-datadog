@@ -3,6 +3,7 @@
 require 'emeril/rake' unless ENV['CI']
 require 'fileutils'
 require 'foodcritic'
+require 'rake/clean'
 require 'rspec/core/rake_task'
 require 'rubocop/rake_task'
 
@@ -10,6 +11,9 @@ task :default => [
   :style,
   :spec
 ]
+
+CLEAN.include %w(.kitchen/ .yardoc/ coverage/)
+CLOBBER.include %w(doc/ Berksfile.lock Gemfile.lock)
 
 # Style tests. Rubocop and Foodcritic
 namespace :style do
@@ -56,7 +60,7 @@ namespace :generate do
       FileUtils.symlink(gemfile_relative_path, 'Gemfile')
     end
 
-    suite_name.gsub!('_', '-')
+    suite_name.tr!('_', '-')
 
     puts <<-EOT.sub(/\n$/, '')
       New test suite created!

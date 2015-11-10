@@ -27,6 +27,24 @@ platforms:
     box: opscode_<%= platform_version %>_chef-provisionerless
     box_url: http://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_<%= platform_version %>_chef-provisionerless.box
     require_chef_omnibus: <%= chef_version %>
+<% end
+
+windows_platform = 'windows-2012r2'
+
+chef_versions.each do |chef_version|
+%>
+
+- name: <%= windows_platform %>-<%= chef_version %>
+  driver_config:
+    box: mwrock/Windows2012R2  # lightweight windows box
+    require_chef_omnibus: <%= chef_version %>
+    communicator: winrm
+    customize:
+      usb: "off"  # USB is disabled on this box to make it more lightweight
+      vrde: "on"  # enable RDP
+  transport:
+    name: winrm
+
 <% end %>
 
 suites:
@@ -83,6 +101,10 @@ suites:
 - name: datadog_cacti
   run_list:
     - recipe[datadog::cacti]
+  excludes: &WINDOWS_PLATFORMS
+  <% chef_versions.each do |chef_version| %>
+    - <%= windows_platform %>-<%= chef_version %>
+  <% end %>
   attributes:
     datadog:
       <<: *DATADOG
@@ -97,6 +119,20 @@ suites:
               - ifIndex
               - dskDevice
               - ifName
+
+- name: datadog_consul
+  run_list:
+    - recipe[datadog::consul]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      consul:
+        instances:
+          - url: http://localhost:8500
+            new_leader_checks: false
+            catalog_checks: false
+            service_whitelist: consul
+            tags: ['_default']
 
 - name: datadog_cassandra
   run_list:
@@ -124,9 +160,25 @@ suites:
             user: someuser
             password: somepass
 
+- name: datadog_etcd
+  run_list:
+    - recipe[datadog::etcd]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      etcd:
+        instances:
+          - url: http://localhost:2379
+            timeout: 5
+            ssl_keyfile: /etc/etcd/ssl.key
+            ssl_certfile: /etc/etcd/ssl.crt
+            ssl_cert_validation: true
+            ssl_ca_certs: /etc/etcd/ca-certs.crt
+
 - name: datadog_docker
   run_list:
     - recipe[datadog::docker]
+  excludes: *WINDOWS_PLATFORMS
   attributes:
     datadog:
       <<: *DATADOG
@@ -163,6 +215,8 @@ suites:
             username: someuser
             password: somepass
             is_external: false
+            pshard_stats: true
+            shard_level_metrics: true
             tags:
               - kitchen
               - sink
@@ -220,29 +274,36 @@ suites:
       jmx:
         instances:
           - host: localhost
-            port: 9999
-            extra_key: extra_val
+            port: 7199
+            user: someuser
+            password: somepass
+            name: jmx_instance
+            tags:
+              env: stage
+              newTag: test
             conf:
               - include:
-                  domain: domain0
-                  type: ThreadPool
-                  bean: tomcat_bean
-                  attributes:
-                    maxThreads:
-                      alias: tomcat.threads.max
-                      metric_type: gauge
-                    bytesReceived:
-                      alias: tomcat.bytes_rcvd
+                  domain: my_domain
+                  bean:
+                    - my_bean
+                    - my_second_bean
+                  attribute:
+                    attribute1:
                       metric_type: counter
-                include:
-                  domain: org.apache.cassandra.db
-                  attributes:
-                    - BloomFilterDiskSpaceUsed
-                    - Capacity
-                  bean_name: com.datadoghq.test:type=BeanType,tag1=my_bean_name
-                  foo: bar
+                      alias: jmx.my_metric_name
+                    attribute2:
+                      metric_type: gauge
+                      alias: jmx.my2ndattribute
+              - include:
+                  domain: 2nd_domain
                 exclude:
-                - domain: evil_domain
+                  bean:
+                    - excluded_bean
+              - include:
+                  domain_regex: regex_on_domain
+                exclude:
+                  bean_regex:
+                    - regex_on_excluded_bean
 
 - name: datadog_mongo
   run_list:
@@ -289,6 +350,7 @@ suites:
 - name: datadog_kafka_consumer
   run_list:
     - recipe[datadog::kafka_consumer]
+  excludes: *WINDOWS_PLATFORMS
   attributes:
     datadog:
       <<: *DATADOG
@@ -304,6 +366,7 @@ suites:
 - name: datadog_mesos
   run_list:
     - recipe[datadog::mesos]
+  excludes: *WINDOWS_PLATFORMS
   attributes:
     datadog:
       <<: *DATADOG
@@ -317,9 +380,26 @@ suites:
         init_config:
           default_timeout: 10
 
+- name: datadog_pgbouncer
+  run_list:
+    - recipe[datadog::pgbouncer]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      pgbouncer:
+        instances:
+          - host: localhost
+            port: 6432
+            username: john
+            password: doe
+            tags:
+              - toto
+              - tata
+
 - name: datadog_process
   run_list:
     - recipe[datadog::process]
+  excludes: *WINDOWS_PLATFORMS
   attributes:
     datadog:
       <<: *DATADOG
@@ -335,6 +415,25 @@ suites:
               - "somepid"
               - "pidname"
 
+- name: datadog_supervisord
+  run_list:
+    - recipe[datadog::supervisord]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      supervisord:
+        instances:
+          - name: server0
+            socket: unix:///var/run/default-supervisor.sock
+          - name: server1
+            host: localhost
+            port: 9001
+            user: user
+            pass: pass
+            proc_names:
+              - apache2
+              - webapp
+
 - name: datadog_tcp_check
   run_list:
     - recipe[datadog::tcp_check]
@@ -349,3 +448,25 @@ suites:
           - name: test2
             host: localhost
             port: 5678
+- name: datadog_postfix
+  run_list:
+    - recipe[sudo]
+    - recipe[datadog::postfix]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      postfix:
+        instances:
+        - directory: "/var/spool/postfix"
+          queues:
+          - incoming
+          - active
+          - deferred
+          tags:
+          - prod
+          - postfix_core
+        - directory: "/var/spool/postfix"
+          queues:
+          - bounce
+          tags:
+          - test
