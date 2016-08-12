@@ -46,17 +46,23 @@ shared_examples_for 'common windows resources' do
   it 'drops an agent config file' do
     expect(chef_run).to create_template 'C:\ProgramData/Datadog/datadog.conf'
   end
+
+  it 'does not render a go-metro log config' do
+    expect(chef_run).to_not render_file('C:\ProgramData/Datadog/datadog.conf').with_content(/^go-metro_log_file.*$/)
+  end
 end
 
 shared_examples_for 'windows Datadog Agent' do
   it_behaves_like 'common windows resources'
 
+  agent_installer = 'C:/chef/cache/ddagent-cli.msi'
+
   it 'downloads the remote file only if it\'s changed' do
-    expect(chef_run).to create_remote_file('MSI installer')
+    expect(chef_run).to create_remote_file(agent_installer)
   end
 
   it 'notifies the removal of the Datadog Agent' do
-    expect(chef_run.remote_file('MSI installer')).to notify('windows_package[Datadog Agent]').to(:remove)
+    expect(chef_run.remote_file(agent_installer)).to notify('windows_package[Datadog Agent]').to(:remove)
   end
 
   it 'installs Datadog Agent' do

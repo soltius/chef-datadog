@@ -4,7 +4,8 @@ To submit issues and patches please visit https://github.com/DataDog/chef-datado
 The code is licensed under the Apache License 2.0 (see  LICENSE for details).
 
 [![Chef cookbook](https://img.shields.io/cookbook/v/datadog.svg?style=flat)](https://github.com/DataDog/chef-datadog)
-[![Build Status](https://secure.travis-ci.org/DataDog/chef-datadog.svg?branch=master)](http://travis-ci.org/DataDog/chef-datadog)
+[![Build Status](https://travis-ci.org/DataDog/chef-datadog.svg?branch=master)](https://travis-ci.org/DataDog/chef-datadog)
+[![Circle CI](https://circleci.com/gh/DataDog/chef-datadog.svg?style=shield)](https://circleci.com/gh/DataDog/chef-datadog)
 [![Coverage Status](https://coveralls.io/repos/DataDog/chef-datadog/badge.svg?branch=master)](https://coveralls.io/r/DataDog/chef-datadog?branch=master)
 [![GitHub forks](https://img.shields.io/github/forks/DataDog/chef-datadog.svg)](https://github.com/DataDog/chef-datadog/network)
 [![GitHub stars](https://img.shields.io/github/stars/DataDog/chef-datadog.svg)](https://github.com/DataDog/chef-datadog/stargazers)
@@ -50,6 +51,11 @@ Just a placeholder for now, when we have more shared components they will probab
 dd-agent
 --------
 Installs the Datadog agent on the target system, sets the API key, and start the service to report on the local system metrics
+
+**Note for Windows**: With Chef >= 12.6 _and_ the `windows` cookbook >= 1.39.0, Agent upgrades are known to fail.
+For Chef>=12.6 users on Windows, we recommend pinning the `windows` cookbook to a lower version (`~> 1.38.0` for instance).
+If that's not an option, a known workaround is to use the `remove-dd-agent` recipe (since the `2.5.0` version of the present cookbook) to uninstall the Agent
+prior to any Agent upgrade.
 
 dd-handler
 ----------

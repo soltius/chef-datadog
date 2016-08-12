@@ -30,8 +30,11 @@ platforms:
 <% end
 
 windows_platform = 'windows-2012r2'
+windows_chef_versions = %w(
+  12.2.1
+)
 
-chef_versions.each do |chef_version|
+windows_chef_versions.each do |chef_version|
 %>
 
 - name: <%= windows_platform %>-<%= chef_version %>
@@ -69,19 +72,6 @@ suites:
     datadog: &DATADOG
       api_key: somethingnotnil
       application_key: alsonotnil
-
-- name: datadog_activemq
-  run_list:
-    - recipe[datadog::activemq]
-  attributes:
-    datadog:
-      <<: *DATADOG
-      activemq:
-        instances:
-          - host: localhost
-            port: 1099
-            user: someuser
-            password: somepass
 
 - name: datadog_apache
   run_list:
@@ -141,6 +131,21 @@ suites:
     datadog:
       <<: *DATADOG
       cassandra:
+        instances:
+          - host: localhost
+            port: 7199
+            user: someuser
+            password: somepass
+            process_name_regex: .*cassandra.*
+
+- name: datadog_cassandra_version
+  run_list:
+    - recipe[datadog::cassandra]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      cassandra:
+        version: 2
         instances:
           - host: localhost
             port: 7199
@@ -316,6 +321,32 @@ suites:
           - host: localhost
             port: 27017
 
+- name: datadog_mysql
+  run_list:
+    - recipe[datadog::mysql]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      mysql:
+        instances:
+          - server: 1.1.1.1
+            port: 3307
+            user: my_username
+            pass: my_password
+            sock: /path/to/mysql.sock
+            tags: ['prod', 'my_app']
+            options:
+              - 'replication: 0'
+            queries:
+              - type: gauge
+                field: users_count
+                metric: my_app.my_users.count
+                query: SELECT COUNT(1) AS users_count FROM users
+              - type: gauge
+                field: max_query_time
+                metric: mysql.performance.max_query_time
+                query: SELECT IFNULL(MAX(TIME), 0) AS max_query_time FROM INFORMATION_SCHEMA.PROCESSLIST WHERE COMMAND != 'Sleep'
+
 - name: datadog_ntp
   run_list:
     - recipe[datadog::ntp]
@@ -415,6 +446,30 @@ suites:
               - "somepid"
               - "pidname"
 
+- name: datadog_ssh_check
+  run_list:
+    - recipe[datadog::ssh_check]
+  attributes:
+    datadog:
+      <<: *DATADOG
+      ssh_check:
+        instances:
+          - host: localhost
+            username: root
+            password: password
+            add_missing_keys: false
+            tags:
+              - tag1
+              - tag2
+          - host: sftp_server.example.com
+            username: test
+            port: 2323
+            sftp_check: true
+            private_key_file: /path/to/key
+            tags:
+              - tag1
+              - tag3
+
 - name: datadog_supervisord
   run_list:
     - recipe[datadog::supervisord]
@@ -448,11 +503,31 @@ suites:
           - name: test2
             host: localhost
             port: 5678
+
+
+- name: datadog_integrations
+  run_list:
+    - recipe[datadog::dd-agent]
+  excludes: *WINDOWS_PLATFORMS
+  attributes:
+    datadog:
+      <<: *DATADOG
+      extra_packages:
+        twemproxy:
+          name: dd-check-twemproxy
+          version: 0.1.0-1
+      twemproxy:
+        instances:
+          - url: http://localhost:22222
+
 - name: datadog_postfix
   run_list:
     - recipe[sudo]
     - recipe[datadog::postfix]
   attributes:
+    authorization:
+      sudo:
+        include_sudoers_d: true
     datadog:
       <<: *DATADOG
       postfix:

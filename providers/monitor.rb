@@ -18,11 +18,16 @@ action :add do
       owner 'dd-agent'
       mode 00600
     end
+
+    source 'integration.yaml.erb' if new_resource.use_integration_template
+
     variables(
-      :init_config => new_resource.init_config,
-      :instances   => new_resource.instances
+      init_config: new_resource.init_config,
+      instances:   new_resource.instances,
+      version:     new_resource.version
     )
     cookbook new_resource.cookbook
+    sensitive true if Chef::Resource.instance_methods(false).include?(:sensitive)
     notifies :restart, 'service[datadog-agent]', :delayed if node['datadog']['agent_start']
   end
 
@@ -36,6 +41,7 @@ action :remove do
   Chef::Log.debug "Removing #{new_resource.name} from #{confd_dir}"
   file ::File.join(confd_dir, "#{new_resource.name}.yaml") do
     action :delete
+    sensitive true if Chef::Resource.instance_methods(false).include?(:sensitive)
     notifies :restart, 'service[datadog-agent]', :delayed if node['datadog']['agent_start']
   end
 

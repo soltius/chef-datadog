@@ -1,6 +1,59 @@
 Changes
 =======
 
+# 2.5.0 / 2016-08-08
+
+* [FEATURE] Add support for `extra_packages` agent checks, [#271][] [@tmichelet][]
+* [FEATURE] Add Windows support to `remove-dd-agent` recipe (Chef >= 12.6 only), [#332][] [@raycrawford][]
+* [FEATURE] Make yum repo GPG key an attribute, [#326][] [@iancward][]
+* [FEATURE] Add support for `provider` option in `iis` check, [#324][] [@clmoreno][]
+* [FEATURE] Add support for tags in `etcd` check, [#322][] [@stensonb][]
+* [FEATURE] Add `developer_mode` option to `datadog.conf`, [#315][] [@olivielpeau][]
+* [FEATURE] Add support for `win32_event_log` check, [#314][] [@olivielpeau][]
+* [FEATURE] Add `dogstatsd_target` option to `datadog.conf`, [#313][] [@jcftang-r7][]
+* [FEATURE] Add support for`custom_metrics` in `postgres` check, [#284][] [@flah00][]
+* [OPTIMIZE] Update windows support with many improvements, [#334][] [@brentm5][]
+* [OPTIMIZE] Pass the `hostname` attribute to the handler, [#308][] [@gmmeyer][]
+* [MISC] Allow non-breaking updates of `chef_handler`, [#291][] [@eherot][]
+
+  **NOTE** The strict version constraint on `chef_handler` had been introduced because the `1.2` minor release
+  of `chef_handler` broke compatibility with Chef 11. Chef 11 compatibility has been re-introduced in the `1.3`
+  release, we recommend using that version or higher if you use Chef 11.
+
+# 2.4.0 / 2016-05-04
+
+* [FEATURE] Add support for `dns_check`, [#294][] [@nickmarden][]
+* [FEATURE] Add support for `directory` check, [#277][] [@kindlyseth][]
+* [BUGFIX] Template error in `postgres.yaml`, [#300][], [#304][] [@miketheman][]
+
+# 2.3.0 / 2016-04-25
+
+* [FEATURE] Add support for `go_expvar` check, [#298][] [@hartfordfive][]
+* [FEATURE] Allow a String or Hash when configuring Agent tags, [#296][] [@martinisoft][]
+* [FEATURE] Allow passing a `tag_prefix` to the handler, [#285][] [@mstepniowski][]
+* [FEATURE] Allow Agent config to control service behavior, [#280][] [@hydrant25][] & [@miketheman][]
+* [FEATURE] Add `collect_function_metrics` to `postgres` check, [#278][] [@isaacdd][]
+* [FEATURE] Add logging configuration overrides, [#273][] [@SupermanScott][] & [@miketheman][]
+* [FEATURE] Add `cassandra` template versions, [#263][] [@yannmh][] [@sethrosenblum][] & [@miketheman][]
+* [FEATURE] Add `sites` options to `iis` check, [#261][], [@cobusbernard][] & [@miketheman][]
+* [FEATURE] Add missing options to `rabbitmq` check, [#232][] [@mattrobenolt][] & [@miketheman][]
+* [FEATURE] Add Agent config option for `histogram_*`, [#272][], [@SupermanScott][]
+* [FEATURE] Add support for `commandstats` in redis check, [#266][] [@sethrosenblum][]
+* [FEATURE] Add support for `ssh_check` check, [#262][] [@wk8][]
+* [FEATURE] Add support for custom MySQL queries, [#259][] [@wk8][]
+* [FEATURE] Add PHP-FPM recipe, [#253][] [@jridgewell][]
+* [FEATURE] Allow `yum_repository` resource to receive proxy options, [#251][] [@RedWhiteMiko][]
+* [FEATURE] Add Agent config option for `statsd_metric_namespace`, [#250][] [@MiguelMoll][]
+* [FEATURE] Allow use of Agent `web_proxy` config for Handler, [#208][] [@datwiz][]
+* [OPTIMIZE] Allow `tags` to be `nil` during Windows Agent install, [#286][] [@rlaveycal][]
+* [OPTIMIZE] Apply `sensitive` filter to template renders, [#274][] [@martinisoft][]
+* [DOCS] Correct `redisdb` example, [#281][] [@iashwash][]
+* [DOCS] Correct `docker_daemon` example, [#276][] [@dlackty][]
+* [MISC] Remove `knife.rb` file from repo, [#299][] [@miketheman][]
+* [MISC] Convert Kitchen Test to ChefSpec test for `activemq`, [#295][] [@miketheman][]
+* [MISC] Add Kitchen tests via CircleCI & kitchen-docker, [@miketheman][]
+* [MISC] Update Travis lint/spec tests to use ChefDK-supplied packages, [@miketheman][]
+
 # 2.2.0 / 2015-10-27
 
 * This release deserves a specific callout for a feature that has been finally
@@ -314,6 +367,7 @@ A fix has gone in to `apt` 2.1.0 that relaxes this condition, and plays well wit
 [#203]: https://github.com/DataDog/chef-datadog/issues/203
 [#204]: https://github.com/DataDog/chef-datadog/issues/204
 [#205]: https://github.com/DataDog/chef-datadog/issues/205
+[#208]: https://github.com/DataDog/chef-datadog/issues/208
 [#209]: https://github.com/DataDog/chef-datadog/issues/209
 [#210]: https://github.com/DataDog/chef-datadog/issues/210
 [#212]: https://github.com/DataDog/chef-datadog/issues/212
@@ -330,6 +384,7 @@ A fix has gone in to `apt` 2.1.0 that relaxes this condition, and plays well wit
 [#227]: https://github.com/DataDog/chef-datadog/issues/227
 [#229]: https://github.com/DataDog/chef-datadog/issues/229
 [#231]: https://github.com/DataDog/chef-datadog/issues/231
+[#232]: https://github.com/DataDog/chef-datadog/issues/232
 [#235]: https://github.com/DataDog/chef-datadog/issues/235
 [#237]: https://github.com/DataDog/chef-datadog/issues/237
 [#238]: https://github.com/DataDog/chef-datadog/issues/238
@@ -341,62 +396,126 @@ A fix has gone in to `apt` 2.1.0 that relaxes this condition, and plays well wit
 [#247]: https://github.com/DataDog/chef-datadog/issues/247
 [#248]: https://github.com/DataDog/chef-datadog/issues/248
 [#249]: https://github.com/DataDog/chef-datadog/issues/249
+[#250]: https://github.com/DataDog/chef-datadog/issues/250
+[#251]: https://github.com/DataDog/chef-datadog/issues/251
+[#253]: https://github.com/DataDog/chef-datadog/issues/253
+[#259]: https://github.com/DataDog/chef-datadog/issues/259
+[#261]: https://github.com/DataDog/chef-datadog/issues/261
+[#262]: https://github.com/DataDog/chef-datadog/issues/262
+[#263]: https://github.com/DataDog/chef-datadog/issues/263
+[#266]: https://github.com/DataDog/chef-datadog/issues/266
+[#271]: https://github.com/DataDog/chef-datadog/issues/271
+[#272]: https://github.com/DataDog/chef-datadog/issues/272
+[#273]: https://github.com/DataDog/chef-datadog/issues/273
+[#274]: https://github.com/DataDog/chef-datadog/issues/274
+[#276]: https://github.com/DataDog/chef-datadog/issues/276
+[#277]: https://github.com/DataDog/chef-datadog/issues/277
+[#278]: https://github.com/DataDog/chef-datadog/issues/278
+[#280]: https://github.com/DataDog/chef-datadog/issues/280
+[#281]: https://github.com/DataDog/chef-datadog/issues/281
+[#284]: https://github.com/DataDog/chef-datadog/issues/284
+[#285]: https://github.com/DataDog/chef-datadog/issues/285
+[#286]: https://github.com/DataDog/chef-datadog/issues/286
+[#291]: https://github.com/DataDog/chef-datadog/issues/291
+[#294]: https://github.com/DataDog/chef-datadog/issues/294
+[#295]: https://github.com/DataDog/chef-datadog/issues/295
+[#296]: https://github.com/DataDog/chef-datadog/issues/296
+[#298]: https://github.com/DataDog/chef-datadog/issues/298
+[#299]: https://github.com/DataDog/chef-datadog/issues/299
+[#300]: https://github.com/DataDog/chef-datadog/issues/300
+[#304]: https://github.com/DataDog/chef-datadog/issues/304
+[#308]: https://github.com/DataDog/chef-datadog/issues/308
+[#313]: https://github.com/DataDog/chef-datadog/issues/313
+[#314]: https://github.com/DataDog/chef-datadog/issues/314
+[#315]: https://github.com/DataDog/chef-datadog/issues/315
+[#322]: https://github.com/DataDog/chef-datadog/issues/322
+[#324]: https://github.com/DataDog/chef-datadog/issues/324
+[#326]: https://github.com/DataDog/chef-datadog/issues/326
+[#332]: https://github.com/DataDog/chef-datadog/issues/332
+[#334]: https://github.com/DataDog/chef-datadog/issues/334
 [@ABrehm264]: https://github.com/ABrehm264
 [@DorianZaccaria]: https://github.com/DorianZaccaria
 [@EasyAsABC123]: https://github.com/EasyAsABC123
 [@JoeDeVries]: https://github.com/JoeDeVries
 [@LeoCavaille]: https://github.com/LeoCavaille
+[@MiguelMoll]: https://github.com/MiguelMoll
 [@NathanielMichael]: https://github.com/NathanielMichael
+[@RedWhiteMiko]: https://github.com/RedWhiteMiko
 [@SelerityMichael]: https://github.com/SelerityMichael
+[@SupermanScott]: https://github.com/SupermanScott
 [@alexism]: https://github.com/alexism
 [@alq]: https://github.com/alq
 [@antonio-osorio]: https://github.com/antonio-osorio
 [@arthurnn]: https://github.com/arthurnn
 [@babbottscott]: https://github.com/babbottscott
 [@bitmonk]: https://github.com/bitmonk
+[@brentm5]: https://github.com/brentm5
 [@chrissnell]: https://github.com/chrissnell
+[@clmoreno]: https://github.com/clmoreno
 [@clofresh]: https://github.com/clofresh
+[@cobusbernard]: https://github.com/cobusbernard
 [@coosh]: https://github.com/coosh
 [@ctrlok]: https://github.com/ctrlok
 [@darron]: https://github.com/darron
+[@datwiz]: https://github.com/datwiz
+[@dlackty]: https://github.com/dlackty
 [@dominicchan]: https://github.com/dominicchan
 [@donaldguy]: https://github.com/donaldguy
 [@drewrothstein]: https://github.com/drewrothstein
 [@dwradcliffe]: https://github.com/dwradcliffe
+[@eherot]: https://github.com/eherot
 [@elafarge]: https://github.com/elafarge
 [@elijahandrews]: https://github.com/elijahandrews
 [@evan2645]: https://github.com/evan2645
 [@flah00]: https://github.com/flah00
+[@gmmeyer]: https://github.com/gmmeyer
 [@graemej]: https://github.com/graemej
 [@gregf]: https://github.com/gregf
+[@hartfordfive]: https://github.com/hartfordfive
 [@hilli]: https://github.com/hilli
+[@hydrant25]: https://github.com/hydrant25
+[@iancward]: https://github.com/iancward
+[@iashwash]: https://github.com/iashwash
 [@inokappa]: https://github.com/inokappa
+[@isaacdd]: https://github.com/isaacdd
 [@jblancett]: https://github.com/jblancett
+[@jcftang-r7]: https://github.com/jcftang-r7
 [@jedi4ever]: https://github.com/jedi4ever
 [@jeffbyrnes]: https://github.com/jeffbyrnes
 [@jmanero-r7]: https://github.com/jmanero-r7
 [@jpcallanta]: https://github.com/jpcallanta
+[@jridgewell]: https://github.com/jridgewell
 [@jtimberman]: https://github.com/jtimberman
 [@juliandunn]: https://github.com/juliandunn
 [@khouse]: https://github.com/khouse
+[@kindlyseth]: https://github.com/kindlyseth
 [@kurochan]: https://github.com/kurochan
+[@martinisoft]: https://github.com/martinisoft
+[@mattrobenolt]: https://github.com/mattrobenolt
 [@mfischer-zd]: https://github.com/mfischer-zd
 [@miketheman]: https://github.com/miketheman
 [@mirceal]: https://github.com/mirceal
+[@mstepniowski]: https://github.com/mstepniowski
 [@mtougeron]: https://github.com/mtougeron
+[@nickmarden]: https://github.com/nickmarden
 [@nkts]: https://github.com/nkts
 [@olivielpeau]: https://github.com/olivielpeau
 [@opsline-radek]: https://github.com/opsline-radek
 [@phlipper]: https://github.com/phlipper
 [@qqfr2507]: https://github.com/qqfr2507
+[@raycrawford]: https://github.com/raycrawford
 [@remh]: https://github.com/remh
 [@rlaveycal]: https://github.com/rlaveycal
 [@ryandjurovich]: https://github.com/ryandjurovich
 [@schisamo]: https://github.com/schisamo
+[@sethrosenblum]: https://github.com/sethrosenblum
+[@stensonb]: https://github.com/stensonb
 [@takus]: https://github.com/takus
 [@tejom]: https://github.com/tejom
 [@thisismana]: https://github.com/thisismana
 [@timusg]: https://github.com/timusg
+[@tmichelet]: https://github.com/tmichelet
 [@uzyexe]: https://github.com/uzyexe
 [@wk8]: https://github.com/wk8
+[@yannmh]: https://github.com/yannmh
 [@zshenker]: https://github.com/zshenker

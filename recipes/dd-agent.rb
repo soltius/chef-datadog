@@ -17,21 +17,25 @@
 # limitations under the License.
 #
 
+is_windows = node['platform_family'] == 'windows'
+
 # Install the agent
-if node['platform_family'] == 'windows'
+if is_windows
   include_recipe 'datadog::_install-windows'
 else
   include_recipe 'datadog::_install-linux'
 end
 
+# Set the Agent service enable or disable
+agent_enable = node['datadog']['agent_enable'] ? :enable : :disable
 # Set the correct Agent startup action
-agent_action = node['datadog']['agent_start'] ? :start : :stop
+agent_start = node['datadog']['agent_start'] ? :start : :stop
 # Set the correct config file
 agent_config_file = ::File.join(node['datadog']['config_dir'], 'datadog.conf')
 
 # Make sure the config directory exists
 directory node['datadog']['config_dir'] do
-  if node['platform_family'] == 'windows'
+  if is_windows
     owner 'Administrators'
     rights :full_control, 'Administrators'
     inherits false
@@ -50,7 +54,7 @@ end
 raise "Add a ['datadog']['api_key'] attribute to configure this node's Datadog Agent." if node['datadog'] && node['datadog']['api_key'].nil?
 
 template agent_config_file do
-  if node['platform_family'] == 'windows'
+  if is_windows
     owner 'Administrators'
     rights :full_control, 'Administrators'
     inherits false
@@ -63,16 +67,20 @@ template agent_config_file do
     :api_key => node['datadog']['api_key'],
     :dd_url => node['datadog']['url']
   )
+  sensitive true if Chef::Resource.instance_methods(false).include?(:sensitive)
 end
 
 # Common configuration
 service 'datadog-agent' do
   service_name node['datadog']['agent_name']
-  action [:enable, agent_action]
-  if node['platform_family'] == 'windows'
+  action [agent_enable, agent_start]
+  if is_windows
     supports :restart => true, :start => true, :stop => true
   else
     supports :restart => true, :status => true, :start => true, :stop => true
   end
   subscribes :restart, "template[#{agent_config_file}]", :delayed unless node['datadog']['agent_start'] == false
 end
+
+# Install integration packages
+include_recipe 'datadog::integrations' unless is_windows

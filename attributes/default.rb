@@ -26,11 +26,20 @@ default['datadog']['api_key'] = nil
 # Create an application key on the Account Settings page
 default['datadog']['application_key'] = nil
 
+# Add this prefix to all Chef tags sent to Datadog: "#{tag_prefix}#{tag}"
+# This makes it easy to group hosts in Datadog by their Chef tags, but might be counterproductive
+# if your Chef tags are already in the "#{tag_group}:#{value}" form.
+# Set prefix to '' if you want Chef tags to be sent without prefix.
+default['datadog']['tag_prefix'] = 'tag:'
+
 # Don't change these
 # The host of the Datadog intake server to send agent data to
 default['datadog']['url'] = 'https://app.datadoghq.com'
 
 # Add tags as override attributes in your role
+# This can be a string of comma separated tags or a hash in this format:
+# default['datadog']['tags'] = { 'datacenter' => 'us-east' }
+# Thie above outputs a string: 'datacenter:us-east'
 # When using the Datadog Chef Handler, tags are set on the node with preset prefixes:
 # `env:node.chef_environment`, `role:node.node.run_list.role`, `tag:somecheftag`
 default['datadog']['tags'] = ''
@@ -45,6 +54,9 @@ default['datadog']['collect_ec2_tags'] = nil
 # Autorestart agent
 default['datadog']['autorestart'] = false
 
+# Run the agent in developer mode
+default['datadog']['developer_mode'] = false
+
 # Repository configuration
 architecture_map = {
   'i686' => 'i386',
@@ -53,11 +65,27 @@ architecture_map = {
 }
 architecture_map.default = 'x86_64'
 
+# Older versions of yum embed M2Crypto with SSL that doesn't support TLS1.2
+yum_protocol =
+  if node['platform_family'] == 'rhel' && node['platform_version'].to_i < 6
+    'http'
+  else
+    'https'
+  end
+
 default['datadog']['installrepo'] = true
 default['datadog']['aptrepo'] = 'http://apt.datadoghq.com'
 default['datadog']['aptrepo_dist'] = 'stable'
 default['datadog']['yumrepo'] = "http://yum.datadoghq.com/rpm/#{architecture_map[node['kernel']['machine']]}/"
+default['datadog']['yumrepo_gpgkey'] = "#{yum_protocol}://yum.datadoghq.com/DATADOG_RPM_KEY.public"
+default['datadog']['yumrepo_proxy'] = nil
+default['datadog']['yumrepo_proxy_username'] = nil
+default['datadog']['yumrepo_proxy_password'] = nil
 default['datadog']['windows_agent_url'] = 'https://s3.amazonaws.com/ddagent-windows-stable/'
+
+# Agent installer checksum
+# Expected checksum to validate correct agent installer is downloaded (Windows only)
+default['datadog']['windows_agent_checksum'] = nil
 
 # Values that differ on Windows
 # The location of the config folder (containing conf.d)
@@ -125,6 +153,9 @@ default['datadog']['use_mount'] = false
 # Change port the agent is listening to
 default['datadog']['agent_port'] = 17123
 
+# Enable the agent to start at boot
+default['datadog']['agent_enable'] = true
+
 # Start agent or not
 default['datadog']['agent_start'] = true
 
@@ -144,6 +175,7 @@ default['datadog']['syslog']['active'] = false
 default['datadog']['syslog']['udp'] = false
 default['datadog']['syslog']['host'] = nil
 default['datadog']['syslog']['port'] = nil
+default['datadog']['log_file_directory'] = '/var/log/datadog'
 
 # Web proxy configuration
 default['datadog']['web_proxy']['host'] = nil
@@ -157,8 +189,17 @@ default['datadog']['dogstatsd'] = true
 default['datadog']['dogstatsd_port'] = 8125
 default['datadog']['dogstatsd_interval'] = 10
 default['datadog']['dogstatsd_normalize'] = 'yes'
+default['datadog']['dogstatsd_target'] = 'http://localhost:17123'
 default['datadog']['statsd_forward_host'] = nil
 default['datadog']['statsd_forward_port'] = 8125
+default['datadog']['statsd_metric_namespace'] = nil
+
+# Histogram settings
+default['datadog']['histogram_aggregates'] = 'max, median, avg, count'
+default['datadog']['histogram_percentiles'] = '0.95'
+
+# extra_packages to install
+default['datadog']['extra_packages'] = {}
 
 # For service-specific configuration, use the integration recipes included
 # in this cookbook, and apply them to the appropirate node's run list.

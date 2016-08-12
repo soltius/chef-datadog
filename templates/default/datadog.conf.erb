@@ -14,8 +14,15 @@ autorestart: <%= node['datadog']['autorestart'] %>
 <% if node['datadog']['web_proxy']['skip_ssl_validation'] -%>
 skip_ssl_validation: <%= node['datadog']['web_proxy']['skip_ssl_validation'] %>
 <% end -%>
+<% if node['datadog']['developer_mode'] -%>
+developer_mode: <%= node['datadog']['developer_mode'] %>
+<% end -%>
 
+<% if node['datadog']['tags'].respond_to?(:each_pair) -%>
+tags: <%= node['datadog']['tags'].reject{ |_k,v| v.empty? }.map{ |k,v| "#{k}:#{v}" }.join(',') %>
+<% else -%>
 tags: <%= node['datadog']['tags'] %>
+<% end -%>
 <% if node['datadog']['create_dd_check_tags'] -%>
 create_dd_check_tags: <%= node['datadog']['create_dd_check_tags'] %>
 <% end -%>
@@ -50,6 +57,10 @@ agent_checks_interval: <%= node['datadog']['agent_checks_interval'] %>
 graphite_listen_port: <%= node['datadog']['graphite_port'] %>
 <% end -%>
 
+## Histogram settings
+histogram_aggregates: <%= node['datadog']['histogram_aggregates'] %>
+histogram_percentiles: <%= node['datadog']['histogram_percentiles'] %>
+
 <% if node['datadog']['dogstatsd'] -%>
 # ========================================================================== #
 # DogStatsd configuration                                                    #
@@ -64,12 +75,19 @@ dogstatsd_port: <%= node['datadog']['dogstatsd_port'] %>
 ## The dogstatsd flush period.
 dogstatsd_interval: <%= node['datadog']['dogstatsd_interval'] %>
 
+## The target location to send the data
+dogstatsd_target: <%= node['datadog']['dogstatsd_target'] %>
+
 ## If 'yes', counters and rates will be normalized to 1 second (that is divided
 ## by the dogstatsd_interval) before being sent to the server. Defaults to 'yes'
 dogstatsd_normalize: <%= node['datadog']['dogstatsd_normalize'] %>
 <% if node['datadog']['statsd_forward_host'] -%>
 statsd_forward_host: <%= node['datadog']['statsd_forward_host'] %>
 statsd_forward_port: <%= node['datadog']['statsd_forward_port'] %>
+<% end -%>
+
+<% if node['datadog']['statsd_metric_namespace'] -%>
+statsd_metric_namespace: <%= node['datadog']['statsd_metric_namespace'] %>
 <% end -%>
 <% end -%>
 
@@ -79,10 +97,13 @@ statsd_forward_port: <%= node['datadog']['statsd_forward_port'] %>
 
 log_level: <%= node['datadog']['log_level'] %>
 
-# collector_log_file: /var/log/datadog/collector.log
-# forwarder_log_file: /var/log/datadog/forwarder.log
-# dogstatsd_log_file: /var/log/datadog/dogstatsd.log
-# pup_log_file:       /var/log/datadog/pup.log
+collector_log_file: <%= node['datadog']['log_file_directory'] %>/collector.log
+forwarder_log_file: <%= node['datadog']['log_file_directory'] %>/forwarder.log
+dogstatsd_log_file: <%= node['datadog']['log_file_directory'] %>/dogstatsd.log
+jmxfetch_log_file: <%= node['datadog']['log_file_directory'] %>/jmxfetch.log
+<% unless node['platform_family'] == 'windows' -%>
+go-metro_log_file: <%= node['datadog']['log_file_directory'] %>/go-metro.log
+<% end -%>
 
 # if syslog is enabled but a host and port are not set, a local domain socket
 # connection will be attempted

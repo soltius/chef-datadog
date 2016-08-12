@@ -150,7 +150,8 @@ describe 'datadog::dd-agent' do
         set_env_var('ProgramData', 'C:\ProgramData')
         ChefSpec::SoloRunner.new(
           :platform => 'windows',
-          :version => '2012R2'
+          :version => '2012R2',
+          :file_cache_path => 'C:/chef/cache'
         ) do |node|
           node.set['datadog'] = { 'api_key' => 'somethingnotnil' }
         end.converge described_recipe
@@ -228,6 +229,106 @@ describe 'datadog::dd-agent' do
       end
 
       it_behaves_like 'debianoids'
+    end
+
+    context 'allows a string for tags' do
+      cached(:chef_run) do
+        ChefSpec::SoloRunner.new(
+          platform: 'ubuntu',
+          version: '12.04'
+        ) do |node|
+          node.set['datadog'] = {
+            'api_key' => 'somethingnotnil',
+            'tags' => 'datacenter:us-foo,database:bar'
+          }
+          node.set['languages'] = { 'python' => { 'version' => '2.6.2' } }
+        end.converge described_recipe
+      end
+
+      it_behaves_like 'common linux resources'
+
+      it 'sets tags from the tags attribute' do
+        expect(chef_run).to render_file('/etc/dd-agent/datadog.conf')
+          .with_content(/^tags: datacenter:us-foo,database:bar$/)
+      end
+    end
+
+    context 'allows key/value for tags' do
+      cached(:chef_run) do
+        ChefSpec::SoloRunner.new(
+          platform: 'ubuntu',
+          version: '12.04'
+        ) do |node|
+          node.set['datadog'] = {
+            'api_key' => 'somethingnotnil',
+            'tags' => { 'datacenter' => 'us-foo', 'database' => 'bar' }
+          }
+          node.set['languages'] = { 'python' => { 'version' => '2.6.2' } }
+        end.converge described_recipe
+      end
+
+      it_behaves_like 'common linux resources'
+
+      it 'sets tags from the tags attribute' do
+        expect(chef_run).to render_file('/etc/dd-agent/datadog.conf')
+          .with_content(/^tags: datacenter:us-foo,database:bar$/)
+      end
+    end
+
+    context 'does not use empty tags' do
+      cached(:chef_run) do
+        ChefSpec::SoloRunner.new(
+          platform: 'ubuntu',
+          version: '12.04'
+        ) do |node|
+          node.set['datadog'] = {
+            'api_key' => 'somethingnotnil',
+            'tags' => { 'datacenter' => 'us-foo', 'database' => '' }
+          }
+          node.set['languages'] = { 'python' => { 'version' => '2.6.2' } }
+        end.converge described_recipe
+      end
+
+      it_behaves_like 'common linux resources'
+
+      it 'sets tags from the tags attribute' do
+        expect(chef_run).to render_file('/etc/dd-agent/datadog.conf')
+          .with_content(/^tags: datacenter:us-foo$/)
+      end
+    end
+  end
+
+  context 'service action' do
+    describe 'default' do
+      cached(:chef_run) do
+        ChefSpec::SoloRunner.new do |node|
+          node.automatic['languages'] = { python: { version: '2.6.2' } }
+          node.set['datadog'] = { api_key: 'somethingnotnil' }
+        end.converge described_recipe
+      end
+
+      it_behaves_like 'datadog-agent service'
+    end
+
+    describe 'agent_enable & agent_start are set to disable, stop' do
+      cached(:chef_run) do
+        ChefSpec::SoloRunner.new do |node|
+          node.automatic['languages'] = { python: { version: '2.6.2' } }
+          node.set['datadog'] = {
+            api_key: 'somethingnotnil',
+            agent_enable: false,
+            agent_start: false
+          }
+        end.converge described_recipe
+      end
+
+      it 'disables the datadog-agent service' do
+        expect(chef_run).to disable_service 'datadog-agent'
+      end
+
+      it 'stops the datadog-agent service' do
+        expect(chef_run).to stop_service 'datadog-agent'
+      end
     end
   end
 end
