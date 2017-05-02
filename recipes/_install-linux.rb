@@ -32,8 +32,36 @@ dd_agent_version =
     node['datadog']['agent_version']
   end
 
+package_retries = node['datadog']['agent_package_retries']
+package_retry_delay = node['datadog']['agent_package_retry_delay']
+
 # If version specified and lower than 5.x
-if !dd_agent_version.nil? && dd_agent_version.split('.')[0].split(':').last.to_i < 5
+if node['datadog']['agent6']
+  unless node['datadog']['allow_both_packages']
+    package 'datadog-agent' do
+      action :remove
+    end
+  end
+
+  case node['platform_family']
+  when 'debian'
+    apt_package 'datadog-agent6' do
+      version node['datadog']['agent6_version']
+      retries package_retries unless package_retries.nil?
+      retry_delay package_retry_delay unless package_retry_delay.nil?
+      action node['datadog']['agent6_package_action'] # default is :install
+      options '--force-yes' if node['datadog']['agent_allow_downgrade']
+    end
+  when 'rhel', 'fedora'
+    yum_package 'datadog-agent6' do
+      version node['datadog']['agent6_version']
+      retries package_retries unless package_retries.nil?
+      retry_delay package_retry_delay unless package_retry_delay.nil?
+      action node['datadog']['agent6_package_action'] # default is :install
+      allow_downgrade node['datadog']['agent_allow_downgrade']
+    end
+  end
+elsif !dd_agent_version.nil? && dd_agent_version.split('.')[0].split(':').last.to_i < 5
   Chef::Log.warn 'Support for Agent pre 5.x will be removed in datadog cookbook version 3.0'
   # Select correct package name based on attribute
   dd_pkg_name = node['datadog']['install_base'] ? 'datadog-agent-base' : 'datadog-agent'
@@ -48,8 +76,14 @@ else
     only_if 'rpm -q datadog-agent-base' if %w(rhel fedora).include?(node['platform_family'])
     not_if 'apt-cache policy datadog-agent-base | grep "Installed: (none)"' if node['platform_family'] == 'debian'
   end
-  package_retries = node['datadog']['agent_package_retries']
-  package_retry_delay = node['datadog']['agent_package_retry_delay']
+
+  # remove the agent6 package
+  unless node['datadog']['allow_both_packages']
+    package 'datadog-agent6' do
+      action :remove
+    end
+  end
+
   # Install the regular package
   case node['platform_family']
   when 'debian'

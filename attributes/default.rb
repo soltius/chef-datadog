@@ -28,6 +28,15 @@ default['datadog']['api_key'] = nil
 # Set it as an attribute, or on your node `run_state` under the key `['datadog']['application_key']`
 default['datadog']['application_key'] = nil
 
+# Set to true to install an agent6 instead of agent5
+# Only works on debianoids for now
+default['datadog']['agent6'] = false
+default['datadog']['agent6_version'] = nil
+default['datadog']['agent6_package_action'] = 'install'
+# Set to true to allow both agent5 and agent6 package to be installed. If left to default of `false`,
+# the "other" package will be removed explicitly (depending on the value of `node['datadog']['agent6']`)
+default['datadog']['allow_both_packages'] = false
+
 # Use this attribute to send data to additional accounts
 # (agent and handler if enabled)
 # The key can be anything you want, 'prod' is used there as an example
@@ -102,6 +111,9 @@ default['datadog']['yumrepo_proxy'] = nil
 default['datadog']['yumrepo_proxy_username'] = nil
 default['datadog']['yumrepo_proxy_password'] = nil
 default['datadog']['windows_agent_url'] = 'https://s3.amazonaws.com/ddagent-windows-stable/'
+
+default['datadog']['aptrepo_agent6'] = 'https://s3.amazonaws.com/apt-agent6.datad0g.com'
+default['datadog']['aptrepo_dist_agent6'] = 'unstable'
 
 # Location of additional rpm gpgkey to import (with signature `e09422b3`). In the future the rpm packages
 # of the Agent will be signed with this key.

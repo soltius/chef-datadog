@@ -40,6 +40,7 @@ agent_enable = node['datadog']['agent_enable'] ? :enable : :disable
 agent_start = node['datadog']['agent_start'] ? :start : :stop
 # Set the correct config file
 agent_config_file = ::File.join(node['datadog']['config_dir'], 'datadog.conf')
+agent6_config_file = ::File.join(node['datadog']['config_dir'], 'datadog.yaml')
 
 # Make sure the config directory exists
 directory node['datadog']['config_dir'] do
@@ -60,6 +61,8 @@ end
 # the node's run_list and set the relevant attributes
 #
 
+# FIXME: with the agent6, we still need the agent5 conf file in /etc/dd-agent/datadog.conf for the trace-agent.
+#        Remove it when the trace-agent can handle datadog.yaml
 template agent_config_file do # rubocop:disable Metrics/BlockLength
   def template_vars # rubocop:disable Metrics/AbcSize
     api_keys = [Chef::Datadog.api_key(node)]
@@ -97,9 +100,57 @@ template agent_config_file do # rubocop:disable Metrics/BlockLength
   sensitive true if Chef::Resource.instance_methods(false).include?(:sensitive)
 end
 
+if node['datadog']['agent6']
+  template agent6_config_file do
+    def template_vars
+      additional_endpoints = {}
+      node['datadog']['extra_endpoints'].each do |_, endpoint|
+        next unless endpoint['enabled']
+        url = if endpoint['url']
+                endpoint['url']
+              else
+                node['datadog']['url']
+              end
+        if additional_endpoints.key?(url)
+          additional_endpoints[url] << endpoint['api_key']
+        else
+          additional_endpoints[url] = [endpoint['api_key']]
+        end
+      end
+      extra_config = {}
+      node['datadog']['extra_config'].each do |k, v|
+        next if v.nil?
+        extra_config[k] = v
+      end
+      {
+        agent_config: extra_config.merge({
+          api_key: Chef::Datadog.api_key(node),
+          dd_url: node['datadog']['url'],
+          hostname: node['datadog']['hostname'],
+          log_level: node['datadog']['log_level'],
+          additional_endpoints: additional_endpoints
+        })
+      }
+    end
+
+    owner 'dd-agent'
+    group 'dd-agent'
+    mode '640'
+    variables(
+      if respond_to?(:lazy)
+        lazy { template_vars }
+      else
+        template_vars
+      end
+    )
+    sensitive true if Chef::Resource.instance_methods(false).include?(:sensitive)
+  end
+end
+
+agent_service_name = node['datadog']['agent6'] ? "datadog-agent6" : node['datadog']['agent_name']
 # Common configuration
 service 'datadog-agent' do
-  service_name node['datadog']['agent_name']
+  service_name agent_service_name
   action [agent_enable, agent_start]
   if is_windows
     supports :restart => true, :start => true, :stop => true
@@ -107,6 +158,7 @@ service 'datadog-agent' do
     supports :restart => true, :status => true, :start => true, :stop => true
   end
   subscribes :restart, "template[#{agent_config_file}]", :delayed unless node['datadog']['agent_start'] == false
+  subscribes :restart, "template[#{agent6_config_file}]", :delayed unless node['datadog']['agent_start'] == false
 end
 
 # Install integration packages

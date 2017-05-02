@@ -42,6 +42,15 @@ when 'debian'
     action :add
   end
 
+  apt_repository 'datadog-agent6' do
+    keyserver 'hkp://keyserver.ubuntu.com:80'
+    key '382E94DE'
+    uri node['datadog']['aptrepo_agent6']
+    distribution node['datadog']['aptrepo_dist_agent6']
+    components ['main']
+    action :add
+  end
+
 when 'rhel', 'fedora'
   include_recipe 'yum'
 

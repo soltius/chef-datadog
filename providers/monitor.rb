@@ -31,8 +31,9 @@ action :add do
     notifies :restart, 'service[datadog-agent]', :delayed if node['datadog']['agent_start']
   end
 
+  agent_service_name = node['datadog']['agent6'] ? "datadog-agent6" : node['datadog']['agent_name']
   service 'datadog-agent' do
-    service_name node['datadog']['agent_name']
+    service_name agent_service_name
   end
 end
 
@@ -45,7 +46,8 @@ action :remove do
     notifies :restart, 'service[datadog-agent]', :delayed if node['datadog']['agent_start']
   end
 
+  agent_service_name = node['datadog']['agent6'] ? "datadog-agent6" : node['datadog']['agent_name']
   service 'datadog-agent' do
-    service_name node['datadog']['agent_name']
+    service_name agent_service_name
   end
 end
