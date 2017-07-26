@@ -107,4 +107,27 @@ describe 'datadog::repository' do
       end
     end
   end
+
+  context 'suselions' do
+    context 'version 12' do
+      cached(:chef_run) do
+        ChefSpec::SoloRunner.new(
+          platform: 'suse', version: '12.2'
+        ).converge(described_recipe)
+      end
+
+      it 'creates datadog repo file' do
+        expect(chef_run).to create_cookbook_file('/etc/zypp/repos.d/datadog.repo').with(source: 'suse_datadog.repo')
+      end
+
+      it 'notifies execution of zypper refresh' do
+        repo_file = chef_run.cookbook_file('/etc/zypp/repos.d/datadog.repo')
+        expect(repo_file).to notify('execute[zypper_refresh]').to(:run).immediately
+      end
+
+      it 'runs zypper refresh' do
+        expect(chef_run).to run_execute('zypper_refresh').with(command: 'zypper --non-interactive --no-gpg-check refresh datadog')
+      end
+    end
+  end
 end
