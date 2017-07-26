@@ -533,7 +533,7 @@ describe 'datadog::dd-agent' do
 
       it 'raises an error' do
         expect(chef_run).to run_ruby_block('datadog-api-key-unset')
-        expect { chef_run.ruby_block('datadog-api-key-unset').old_run_action(:run) }.to raise_error(RuntimeError)
+        expect { chef_run.ruby_block('datadog-api-key-unset').run_action(:run) }.to raise_error(RuntimeError)
       end
     end
 
@@ -678,7 +678,7 @@ describe 'datadog::dd-agent' do
 
         it 'allows downgrade' do
           expect(chef_run).to install_apt_package('datadog-agent')
-            .with(options: '--force-yes')
+            .with(options: ['--force-yes'])
         end
       end
 

@@ -80,4 +80,16 @@ when 'rhel', 'fedora'
     gpgkey node['datadog']['yumrepo_gpgkey']
     action :create
   end
+when 'suse'
+  cookbook_file '/etc/zypp/repos.d/datadog.repo' do
+    source 'suse_datadog.repo'
+    owner  'root'
+    group  'root'
+    mode   '0644'
+    notifies :run, 'execute[zypper_refresh]', :immediate
+  end
+
+  execute 'zypper_refresh' do
+    command 'zypper --non-interactive --no-gpg-check refresh datadog'
+  end
 end
