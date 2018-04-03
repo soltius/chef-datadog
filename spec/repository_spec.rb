@@ -2,7 +2,7 @@ describe 'datadog::repository' do
   context 'on debianoids' do
     cached(:chef_run) do
       ChefSpec::SoloRunner.new(
-        platform: 'debian', version: '8.5'
+        platform: 'debian', version: '8.9'
       ).converge(described_recipe)
     end
 
@@ -14,14 +14,14 @@ describe 'datadog::repository' do
       expect(chef_run).to install_package('install-apt-transport-https')
     end
 
-    it 'installs new apt key' do
-      expect(chef_run).to run_execute('apt-key import key 382E94DE').with(
-        command: 'apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 A2923DFF56EDA6E76E55E492D3A80E30382E94DE'
+    it 'sets up an apt repo' do
+      expect(chef_run).to add_apt_repository('datadog').with(
+        key: ['A2923DFF56EDA6E76E55E492D3A80E30382E94DE']
       )
     end
 
-    it 'sets up an apt repo' do
-      expect(chef_run).to add_apt_repository('datadog')
+    it 'removes the datadog-beta repo' do
+      expect(chef_run).to remove_apt_repository('datadog-beta')
     end
   end
 
@@ -29,7 +29,7 @@ describe 'datadog::repository' do
     context 'version 6' do
       cached(:chef_run) do
         ChefSpec::SoloRunner.new(
-          platform: 'centos', version: '6.5'
+          platform: 'centos', version: '6.9'
         ).converge(described_recipe)
       end
 

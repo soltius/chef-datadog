@@ -1,5 +1,6 @@
 describe 'datadog::directory' do
   expected_yaml = <<-EOF
+    logs: ~
     init_config:
     instances:
       - directory: "/path/to/directory"
@@ -43,8 +44,8 @@ EOF
   it { is_expected.to add_datadog_monitor('directory') }
 
   it 'renders expected YAML config file' do
-    expect(chef_run).to render_file('/etc/dd-agent/conf.d/directory.yaml').with_content { |content|
+    expect(chef_run).to(render_file('/etc/dd-agent/conf.d/directory.yaml').with_content { |content|
       expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-    }
+    })
   end
 end

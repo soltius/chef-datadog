@@ -3,6 +3,7 @@ describe 'datadog::win32_event_log' do
   init_config:
     tag_event_id: yes
 
+  logs: ~
   instances:
     - log_file:
         - Application
@@ -49,8 +50,8 @@ describe 'datadog::win32_event_log' do
   it { is_expected.to add_datadog_monitor('win32_event_log') }
 
   it 'renders expected YAML config file' do
-    expect(chef_run).to render_file('/etc/dd-agent/conf.d/win32_event_log.yaml').with_content { |content|
+    expect(chef_run).to(render_file('/etc/dd-agent/conf.d/win32_event_log.yaml').with_content { |content|
       expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-    }
+    })
   end
 end

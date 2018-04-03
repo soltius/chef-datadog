@@ -12,9 +12,11 @@ platforms:
       ubuntu-12.04
       centos-6.6
       centos-5.11
+      centos-7.1
       debian-7.7
     )
     chef_versions = %w(
+      13
       12.2.1
       11.18.6
     )
@@ -31,6 +33,7 @@ platforms:
 
 windows_platform = 'windows-2012r2'
 windows_chef_versions = %w(
+  13
   12.2.1
 )
 
@@ -62,7 +65,7 @@ suites:
     - recipe[datadog::dd-agent]
   attributes:
     datadog: &DATADOG
-      api_key: somethingnotnil
+      api_key: somenonnullapikeythats32charlong
       application_key: alsonotnil
 
 - name: dd-handler
@@ -70,7 +73,7 @@ suites:
     - recipe[datadog::dd-handler]
   attributes:
     datadog: &DATADOG
-      api_key: somethingnotnil
+      api_key: somenonnullapikeythats32charlong
       application_key: alsonotnil
 
 - name: datadog_apache
