@@ -1,5 +1,6 @@
 describe 'datadog::postgres' do
   expected_yaml = <<-EOF
+    logs: ~
     instances:
     - host: localhost
       port: 5432
@@ -101,15 +102,16 @@ describe 'datadog::postgres' do
   it { is_expected.to add_datadog_monitor('postgres') }
 
   it 'renders expected YAML config file' do
-    expect(chef_run).to render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
+    expect(chef_run).to(render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
       expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-    }
+    })
   end
 end
 
 describe 'datadog::postgres' do
   context 'default settings' do
     expected_yaml = <<-EOF
+      logs: ~
       instances:
       - host: localhost
         port: 5432
@@ -144,14 +146,15 @@ describe 'datadog::postgres' do
     it { is_expected.to add_datadog_monitor('postgres') }
 
     it 'renders expected YAML config file' do
-      expect(chef_run).to render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
+      expect(chef_run).to(render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
         expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-      }
+      })
     end
   end
 
   context 'relations' do
     expected_yaml = <<-EOF
+      logs: ~
       instances:
       - host: localhost
         port: 5432
@@ -198,14 +201,15 @@ describe 'datadog::postgres' do
     it { is_expected.to add_datadog_monitor('postgres') }
 
     it 'renders expected YAML config file' do
-      expect(chef_run).to render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
+      expect(chef_run).to(render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
         expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-      }
+      })
     end
   end
 
   context 'descriptors' do
     expected_yaml = <<-EOF
+      logs: ~
       instances:
       - host: localhost
         port: 5432
@@ -286,9 +290,9 @@ describe 'datadog::postgres' do
     it { is_expected.to add_datadog_monitor('postgres') }
 
     it 'renders expected YAML config file' do
-      expect(chef_run).to render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
+      expect(chef_run).to(render_file('/etc/dd-agent/conf.d/postgres.yaml').with_content { |content|
         expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-      }
+      })
     end
   end
 end

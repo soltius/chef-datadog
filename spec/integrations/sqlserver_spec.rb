@@ -1,6 +1,7 @@
 describe 'datadog::sqlserver' do
   context 'config 1' do
     expected_yaml = <<-EOF
+    logs: ~
     init_config:
       custom_metrics:
         - name: sqlserver.clr.execution
@@ -75,9 +76,9 @@ describe 'datadog::sqlserver' do
     it { is_expected.to add_datadog_monitor('sqlserver') }
 
     it 'renders expected YAML config file' do
-      expect(chef_run).to render_file('/etc/dd-agent/conf.d/sqlserver.yaml').with_content { |content|
+      expect(chef_run).to(render_file('/etc/dd-agent/conf.d/sqlserver.yaml').with_content { |content|
         expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-      }
+      })
     end
   end
 end
@@ -85,7 +86,8 @@ end
 describe 'datadog::sqlserver' do
   context 'config 2' do
     expected_yaml = <<-EOF
-    init_config: {}
+    init_config: ~
+    logs: ~
 
     instances:
       - host: fakehostname,1433
@@ -131,9 +133,9 @@ describe 'datadog::sqlserver' do
     it { is_expected.to add_datadog_monitor('sqlserver') }
 
     it 'renders expected YAML config file' do
-      expect(chef_run).to render_file('/etc/dd-agent/conf.d/sqlserver.yaml').with_content { |content|
+      expect(chef_run).to(render_file('/etc/dd-agent/conf.d/sqlserver.yaml').with_content { |content|
         expect(YAML.safe_load(content).to_json).to be_json_eql(YAML.safe_load(expected_yaml).to_json)
-      }
+      })
     end
   end
 end

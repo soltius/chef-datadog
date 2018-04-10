@@ -26,25 +26,21 @@ when 'debian'
     action :install
   end
 
-  # Trust new APT key
-  execute 'apt-key import key 382E94DE' do
-    command 'apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 A2923DFF56EDA6E76E55E492D3A80E30382E94DE'
-    not_if 'apt-key list | grep 382E94DE'
-  end
-
+  uri = node['datadog']['agent6'] ? node['datadog']['agent6_aptrepo'] : node['datadog']['aptrepo']
+  distribution = node['datadog']['agent6'] ? node['datadog']['agent6_aptrepo_dist'] : node['datadog']['aptrepo_dist']
+  components = node['datadog']['agent6'] ? ['main', '6'] : ['main']
   # Add APT repository
   apt_repository 'datadog' do
     keyserver 'hkp://keyserver.ubuntu.com:80'
-    key 'C7A7DA52'
-    uri node['datadog']['aptrepo']
-    distribution node['datadog']['aptrepo_dist']
-    components ['main']
+    key 'A2923DFF56EDA6E76E55E492D3A80E30382E94DE'
+    uri uri
+    distribution distribution
+    components components
     action :add
   end
 
 when 'rhel', 'fedora', 'amazon'
   include_recipe 'yum'
-
   # Import new RPM key
   if node['datadog']['yumrepo_gpgkey_new']
     # gnupg is required to check the downloaded key's fingerprint
@@ -73,23 +69,64 @@ when 'rhel', 'fedora', 'amazon'
   yum_repository 'datadog' do
     name 'datadog'
     description 'datadog'
-    baseurl node['datadog']['yumrepo']
+    if node['datadog']['agent6']
+      baseurl node['datadog']['agent6_yumrepo']
+    else
+      baseurl node['datadog']['yumrepo']
+    end
     proxy node['datadog']['yumrepo_proxy']
     proxy_username node['datadog']['yumrepo_proxy_username']
     proxy_password node['datadog']['yumrepo_proxy_password']
     gpgkey node['datadog']['yumrepo_gpgkey']
+    gpgcheck true
     action :create
   end
 when 'suse'
-  cookbook_file '/etc/zypp/repos.d/datadog.repo' do
-    source 'suse_datadog.repo'
-    owner  'root'
-    group  'root'
-    mode   '0644'
-    notifies :run, 'execute[zypper_refresh]', :immediate
+  # Import new RPM key
+  if node['datadog']['yumrepo_gpgkey_new']
+    # Download new RPM key
+    new_key_local_path = ::File.join(Chef::Config[:file_cache_path], 'DATADOG_RPM_KEY_E09422B3.public')
+    remote_file 'DATADOG_RPM_KEY_E09422B3.public' do
+      path new_key_local_path
+      source node['datadog']['yumrepo_gpgkey_new']
+      not_if 'rpm -q gpg-pubkey-e09422b3' # (key already imported)
+      notifies :run, 'execute[rpm-import datadog key e09422b3]', :immediately
+    end
+
+    # Import key if fingerprint matches
+    execute 'rpm-import datadog key e09422b3' do
+      command "rpm --import #{new_key_local_path}"
+      only_if "gpg --dry-run --quiet --with-fingerprint #{new_key_local_path} | grep 'A4C0 B90D 7443 CF6E 4E8A  A341 F106 8E14 E094 22B3'"
+      action :nothing
+    end
   end
 
-  execute 'zypper_refresh' do
-    command 'zypper --non-interactive --no-gpg-check refresh datadog'
+  old_key_local_path = ::File.join(Chef::Config[:file_cache_path], 'DATADOG_RPM_KEY.public')
+  remote_file 'DATADOG_RPM_KEY.public' do
+    path old_key_local_path
+    source node['datadog']['yumrepo_gpgkey']
+    not_if 'rpm -q gpg-pubkey-4172a230' # (key already imported)
+    notifies :run, 'execute[rpm-import datadog key 4172a230]', :immediately
+  end
+
+  # Import key if fingerprint matches
+  execute 'rpm-import datadog key 4172a230' do
+    command "rpm --import #{old_key_local_path}"
+    only_if "gpg --dry-run --quiet --with-fingerprint #{old_key_local_path} | grep '60A3 89A4 4A0C 32BA E3C0  3F0B 069B 56F5 4172 A230'"
+    action :nothing
+  end
+
+  # Add YUM repository
+  zypper_repository 'datadog' do
+    name 'datadog'
+    description 'datadog'
+    if node['datadog']['agent6']
+      baseurl node['datadog']['agent6_yumrepo_suse']
+    else
+      baseurl node['datadog']['yumrepo_suse']
+    end
+    gpgkey node['datadog']['yumrepo_gpgkey']
+    gpgcheck false
+    action :create
   end
 end
