@@ -23,6 +23,11 @@ agent6_config_file = ::File.join(node['datadog']['agent6_config_dir'], 'datadog.
 template agent6_config_file do # rubocop:disable Metrics/BlockLength
   def template_vars # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     additional_endpoints = {}
+    secret_backend = if node['datadog']['secret_backend_command']
+                       node['datadog']['secret_backend_command']
+                      else
+                        'echo'
+                      end
     node['datadog']['extra_endpoints'].each do |_, endpoint|
       next unless endpoint['enabled']
       url = if endpoint['url']
@@ -43,6 +48,7 @@ template agent6_config_file do # rubocop:disable Metrics/BlockLength
     end
     {
       extra_config: extra_config,
+      secret_backend_command: secret_backend,
       api_key: Chef::Datadog.api_key(node),
       additional_endpoints: additional_endpoints
     }
