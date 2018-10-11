@@ -84,7 +84,6 @@ when 'rhel', 'fedora', 'amazon'
 when 'suse'
   cookbook_file '/etc/zypp/repos.d/datadog.repo' do	  # Import new RPM key
     source  'suse_datadog.repo'	if node['datadog']['yumrepo_gpgkey_new']
-    creates '/etc/zypp/repos.d/datadog.repo'
     owner   'root'
     group   'root'
     mode    '0644'
