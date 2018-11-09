@@ -155,6 +155,7 @@ yum_protocol =
 default['datadog']['installrepo'] = true
 default['datadog']['aptrepo'] = 'http://apt.datadoghq.com'
 default['datadog']['aptrepo_dist'] = 'stable'
+default['datadog']['aptrepo_retries'] = 4
 default['datadog']['yumrepo'] = "#{yum_protocol}://yum.datadoghq.com/rpm/#{architecture_map[node['kernel']['machine']]}/"
 default['datadog']['yumrepo_suse'] = "https://yum.datadoghq.com/suse/rpm/#{architecture_map[node['kernel']['machine']]}/"
 default['datadog']['yumrepo_gpgkey'] = "#{yum_protocol}://yum.datadoghq.com/DATADOG_RPM_KEY.public"
@@ -298,6 +299,7 @@ default['datadog']['web_proxy']['port'] = nil
 default['datadog']['web_proxy']['user'] = nil
 default['datadog']['web_proxy']['password'] = nil
 default['datadog']['web_proxy']['skip_ssl_validation'] = nil # accepted values 'yes' or 'no'
+default['datadog']['web_proxy']['no_proxy'] = nil # only used for agent v6.0+
 
 # dogstatsd
 default['datadog']['dogstatsd'] = true
@@ -369,6 +371,15 @@ default['datadog']['process_agent']['url'] = 'https://process.datadoghq.com'
 # Example: ['my-secret-app', 'dbpass']
 default['datadog']['process_agent']['blacklist'] = []
 
+# Controls the behavior of the cmdline data scrubber
+# If enabled, hides every cmdline argument value whose key matches one of the default
+# or custom sensitive words
+# Default sensitive words: ['password', 'passwd', 'mysql_pwd', 'access_token', 'auth_token',
+# 'api_key', 'apikey', 'secret', 'credentials', 'stripetoken']
+default['datadog']['process_agent']['scrub_args'] = true
+# Example for custom sensitive words: ['consul_token', 'token', 'dd_api_key']
+default['datadog']['process_agent']['custom_sensitive_words'] = []
+
 # Full path to store process-agent logs to override the default.
 default['datadog']['process_agent']['log_file'] = nil
 
@@ -383,7 +394,7 @@ default['datadog']['process_agent']['container_interval'] = nil
 default['datadog']['process_agent']['rtcontainer_interval'] = nil
 
 # Logs functionality settings (Agent 6 only)
-# Set `enable_log_agent` to:
+# Set `enable_logs_agent` to:
 # * `true` to explicitly enable the log agent
 # * `false` to explicitly disable it
 # Leave it to `nil` to let the agent's default behavior decide whether to run the log-agent
